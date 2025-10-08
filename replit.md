@@ -10,6 +10,84 @@ Waibuk is a comprehensive digital yearbook web application that allows schools t
 ✅ Dummy verification (1234) implemented for testing  
 ✅ School code system completely removed - schools now login with email/username and password only
 
+## Deployment to Render
+
+### Recent Deployment Fixes (October 7, 2025)
+
+#### 1. Path Alias Resolution Fix
+✅ **Fixed**: TypeScript path aliases (`@shared/`, `@/`, `@assets/`) now work in production builds
+
+**Problem Solved**: 
+- Path aliases worked on Replit/Vite but failed on Render/Node.js deployment
+- Node.js doesn't understand TypeScript path aliases like `@shared/constants`
+- Dynamic imports with path aliases weren't bundled correctly
+
+**Solution Implemented**:
+- Added `esbuild-plugin-path-alias` to resolve TypeScript path aliases during build
+- Created `esbuild.config.js` with proper alias mapping
+- Replaced dynamic import of `@shared/constants` with static import
+- Updated build script to use esbuild configuration
+
+**Files Modified**:
+- `esbuild.config.js` - New file with esbuild build configuration and path alias resolution
+- `package.json` - Updated build script to use `node esbuild.config.js`
+- `server/routes.ts` - Replaced dynamic import with static import for CURRENT_YEAR
+
+#### 2. Year Parameter Validation Fix
+✅ **Fixed**: Invalid year parameters (NaN) no longer cause database errors
+
+**Problem Solved**:
+- Year parameters were not validated before parsing, causing NaN values to be passed to database
+- Error: `DrizzleQueryError: invalid input syntax for type integer: "NaN"`
+- Affected yearbook viewing, PDF uploads, and year management features
+
+**Solution Implemented**:
+- Added `validateYear()` helper function to validate and parse year parameters
+- Returns 400 error with message: `"Invalid or missing year parameter"` for invalid years
+- Validates year range (1900-2100) and ensures it's a valid number
+- Applied validation to all routes using year parameters
+
+**Routes Fixed**:
+- `GET /api/yearbooks/:schoolId/:year` - Yearbook fetching
+- `GET /api/published-yearbooks/:schoolId/:year` - Published yearbook viewing
+- `POST /api/yearbooks` - Yearbook creation validation
+- `GET /api/memories/school/:schoolId/:year` - Memory fetching by year
+- `GET /api/public-upload-links/school/:schoolId/:year` - Upload links by year
+- `GET /api/yearbook-access/:userId/:schoolId/:year` - Access checking
+- `DELETE /api/yearbook-codes/school/:schoolId/year/:year` - Code deletion
+- `POST /api/memories` - Memory upload validation
+
+**Files Modified**:
+- `server/routes.ts` - Added validateYear() helper and updated all year parameter routes
+
+### Render Deployment Instructions
+
+**Build Command**:
+```bash
+npm install && npm run build
+```
+
+**Start Command**:
+```bash
+npm start
+```
+
+**Environment Variables** (Set in Render Dashboard):
+- `DATABASE_URL` - Your PostgreSQL connection string
+- `SESSION_SECRET` - Random secret for session encryption
+- `SENDGRID_API_KEY` or `RESEND_API_KEY` - Email service API key
+- `NODE_ENV` - Set to `production`
+
+**Build Process**:
+1. `npm run db:push` - Syncs database schema
+2. `vite build` - Builds frontend to `dist/public`
+3. `node esbuild.config.js` - Builds backend with path alias resolution to `dist/index.js`
+
+**Production Server**:
+- Runs `node dist/index.js` 
+- Serves frontend from `dist/public`
+- All path aliases properly resolved in bundle
+
 ## Recent Changes (October 6, 2025)
 
 ### Email Verification System
