@@ -4,7 +4,6 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
 import { promises as fs } from "fs";
-import { fromPath } from "pdf2pic";
 import * as fsSync from "fs";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
@@ -2699,42 +2698,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Helper function to extract PDF pages as images
+  // NOTE: PDF processing disabled - requires pdf2pic, GraphicsMagick and Ghostscript
   const extractPdfPages = async (pdfPath: string, outputDir: string): Promise<string[]> => {
-    try {
-      console.log('Extracting PDF pages from:', pdfPath);
-      
-      const pdfConverter = fromPath(pdfPath, {
-        density: 150,           // DPI for output images
-        saveFilename: "page",   // Base filename
-        savePath: outputDir,    // Output directory
-        format: "jpg",          // Output format
-        width: 1200,           // Max width
-        height: 1600,          // Max height (maintain aspect ratio)
-        quality: 85             // JPEG quality
-      });
-      
-      // Convert all pages
-      const pages = await pdfConverter.bulk(-1, { responseType: "image" });
-      
-      console.log(`Extracted ${pages.length} pages from PDF`);
-      
-      // Return the actual file paths created by pdf2pic
-      const imagePaths = pages.map((page: any) => {
-        console.log('PDF page result:', page);
-        return page.path; // Use the actual path returned by pdf2pic
-      });
-      
-      return imagePaths;
-    } catch (error: any) {
-      console.error('PDF extraction error:', error);
-      
-      // Check if the error is due to missing GraphicsMagick
-      if (error.message?.includes('gm') || error.message?.includes('spawn') || error.code === 'ENOENT') {
-        throw new Error('PDF processing requires GraphicsMagick to be installed on the server. Please ensure GraphicsMagick and Ghostscript are installed.');
-      }
-      
-      throw new Error(`Failed to extract PDF pages: ${error.message || 'Unknown error'}`);
-    }
+    throw new Error('PDF processing is not available on this server. PDF uploads require GraphicsMagick and Ghostscript system dependencies. Please upload individual images instead or upgrade to a hosting plan that supports system packages.');
   };
 
   app.post("/api/yearbooks/:yearbookId/upload-page", upload.single('file'), async (req, res) => {
