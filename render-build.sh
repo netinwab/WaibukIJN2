@@ -13,7 +13,6 @@ echo "✅ System dependencies installed"
 # Install Node.js dependencies
 echo "📦 Installing Node.js dependencies..."
 npm install
-npm run build
 
 # Push database schema
 echo "🗄️  Pushing database schema..."
